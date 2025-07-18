@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Planificador Productivo</title>
+    <!-- Meta descripción para SEO -->
+    <meta name="description" content="Mi Planificador Productivo: Organiza tus prioridades, tareas, hábitos y plan diario para una mayor productividad y bienestar.">
+    <!-- Política de Seguridad de Contenido (CSP) para prevenir ataques XSS.
+         Se añadió 'unsafe-inline' a script-src y style-src para permitir el JavaScript y CSS en línea.
+         NOTA: Para una seguridad óptima en producción, se recomienda externalizar todo el JS y CSS. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com blob:; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self';">
+
+    <!-- Preconexión y carga asíncrona de Google Fonts para evitar bloqueo de renderizado -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"></noscript>
+
+    <!-- Chosen Palette: Calm Productivity -->
+    <!-- Application Structure Plan: A dashboard-like SPA with a fixed sidebar for navigation and a main content area that dynamically updates based on selected features. Each feature section (Priorities, To-Do, Habits, etc.) will have dedicated UI for its CRUD operations (forms, lists, buttons). Modals will be used for adding/editing items to maintain a clean main view. This structure provides clear navigation and a focused interaction for each planning aspect, enhancing usability and avoiding content overload on a single scrollable page. -->
+    <!-- Visualization & Content Choices: 
+        -   Main Dashboard: Overview of key stats (simulated). Goal: Inform. Viz: HTML/CSS cards. Interaction: None.
+        -   Priorities List: Goal: Organize/Inform. Viz: HTML list with checkboxes. Interaction: Add/Edit/Delete buttons, checkbox for completion.
+        -   To-Do List: Goal: Organize. Viz: HTML list. Interaction: Add/Edit/Delete buttons, checkbox for completion, filter buttons.
+        -   Habit Tracker: Goal: Change. Viz: HTML table. Interaction: Add/Edit/Delete buttons, daily checkboxes.
+        -   Daily Planner: Goal: Organize/Change. Viz: HTML grid calendar. Interaction: Add/Edit/Delete events on specific days.
+        -   Undated Notes: Goal: Inform/Organize. Viz: HTML list. Interaction: Add/Edit/Delete buttons.
+        -   Next Week: Goal: Organize. Viz: HTML list. Interaction: Add/Edit/Delete buttons.
+        -   Forms/Modals: For all Create/Update operations. Goal: Interact. Viz: HTML/CSS modal forms. Interaction: Input fields, save/cancel buttons.
+        -   Confirmation Dialogs: For Delete operations. Goal: Inform/Interact. Viz: Custom HTML/CSS modal. Interaction: Confirm/Cancel buttons.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F7F4;
+            color: #3D3B30;
+        }
+        .sidebar {
+            background-color: #FFFFFF;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #3D3B30;
+        }
+        .nav-item:hover {
+            background-color: #E0E0E0;
+        }
+        /* Ajuste de color para el elemento de navegación activo para mejorar el contraste */
+        .nav-item.active {
+            background-color: #2B4EBF; /* Azul más oscuro para mejor contraste con texto blanco */
+            color: white;
+            font-weight: 600;
+        }
+        .nav-item.active:hover {
+            background-color: #1A3E9F; /* Hover más oscuro para el nuevo color activo */
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 500px;
+            z-index: 1001;
+        }
+        .confirm-modal-content {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 400px;
+            z-index: 1001;
+        }
+        input[type="text"], textarea {
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #4A6CFA;
+            box-shadow: 0 0 0 3px rgba(74, 108, 250, 0.2);
+        }
+        .btn-primary {
+            background-color: #4A6CFA;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #3A5BDE;
+        }
+        .btn-secondary {
+            background-color: #E0E0E0;
+            color: #3D3B30;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #C0C0C0;
+        }
+        .btn-danger {
+            background-color: #E76F51;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s;
+        }
+        .btn-danger:hover {
+            background-color: #D65F41;
+        }
+        .icon {
+            margin-right: 0.5rem;
+            font-size: 1.25rem;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+        }
+        .checkbox-custom {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid #4A6CFA;
+            border-radius: 0.25rem;
+            appearance: none;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .checkbox-custom:checked {
+            background-color: #4A6CFA;
+            border-color: #4A6CFA;
+        }
+        .checkbox-custom:checked::after {
+            content: '✔';
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.75rem;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Modal para Añadir/Editar -->
+    <div id="itemModal" class="modal-overlay fixed inset-0 flex items-center justify-center hidden">
+        <div class="modal-content relative">
+            <h3 id="modalTitle" class="text-2xl font-bold mb-4">Añadir Nuevo Elemento</h3>
+            <form id="itemForm">
+                <input type="hidden" id="itemId">
+                <input type="hidden" id="itemType">
+                
+                <div id="formFields" class="space-y-4 mb-6">
+                    <!-- Campos del formulario se inyectarán aquí -->
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <!-- Botones con aria-label para accesibilidad -->
+                    <button type="button" id="cancelModalBtn" class="btn-secondary" aria-label="Cancelar">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación de Eliminación -->
+    <div id="confirmModal" class="modal-overlay fixed inset-0 flex items-center justify-center hidden">
+        <div class="confirm-modal-content text-center">
+            <h3 class="text-xl font-bold mb-4">Confirmar Eliminación</h3>
+            <p id="confirmMessage" class="mb-6 text-gray-700">¿Estás seguro de que quieres eliminar este elemento?</p>
+            <div class="flex justify-center space-x-4">
+                <!-- Botones con aria-label para accesibilidad -->
+                <button type="button" id="cancelConfirmBtn" class="btn-secondary" aria-label="Cancelar">Cancelar</button>
+                <button type="button" id="confirmDeleteBtn" class="btn-danger" aria-label="Eliminar">Eliminar</button>
+            </div>
+        </div>
+    </div
+    >
+    <!-- Barra Lateral de Navegación -->
+    <aside class="sidebar w-64 p-6 flex flex-col items-center justify-between">
+        <div class="w-full">
+            <h2 class="text-3xl font-bold text-[#4A6CFA] mb-8 text-center">Planificador</h2>
+            <nav class="space-y-2">
+                <div id="navDashboard" class="nav-item active" data-target="dashboard">
+                    <span class="icon">🏠</span> Dashboard
+                </div>
+                <div id="navPriorities" class="nav-item" data-target="priorities">
+                    <span class="icon">⭐</span> Prioridades
+                </div>
+                <div id="navTodos" class="nav-item" data-target="todos">
+                    <span class="icon">✅</span> Tareas
+                </div>
+                <div id="navHabits" class="nav-item" data-target="habits">
+                    <span class="icon">🔁</span> Hábitos
+                </div>
+                <div id="navDaily" class="nav-item" data-target="daily">
+                    <span class="icon">🗓️</span> Plan Diario
+                </div>
+                <div id="navNotes" class="nav-item" data-target="notes">
+                    <span class="icon">💡</span> Notas
+                </div>
+                <div id="navNextWeek" class="nav-item" data-target="next-week">
+                    <span class="icon">➡️</span> Próxima Semana
+                </div>
+            </nav>
+        </div>
+        <div class="text-sm text-gray-500 mt-8">
+            <p>&copy; 2025 Mi Planificador</p>
+        </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 p-8 overflow-y-auto">
+        <!-- Título principal de la aplicación (H1 estático) -->
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-[#3D3B30]">Mi Planificador Productivo</h1>
+        </header>
+
+        <!-- Secciones de Contenido (ahora con H2 para los títulos de sección) -->
+        <section id="dashboard" class="content-section">
+            <h2 id="dashboardTitle" class="text-3xl font-bold text-[#3D3B30] mb-6">Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="card">
+                    <!-- Colores ajustados para mejor contraste -->
+                    <h3 class="text-xl font-semibold text-[#2B4EBF]">Tareas Completadas Hoy</h3>
+                    <p class="text-5xl font-bold mt-2" id="dashboardTasksCompleted">0</p>
+                </div>
+                <div class="card">
+                    <!-- Colores ajustados para mejor contraste -->
+                    <h3 class="text-xl font-semibold text-[#1A7C70]">Hábitos Marcados Hoy</h3>
+                    <p class="text-5xl font-bold mt-2" id="dashboardHabitsCompleted">0</p>
+                </div>
+                <div class="card">
+                    <!-- Colores ajustados para mejor contraste -->
+                    <h3 class="text-xl font-semibold text-[#D07F3D]">Prioridades Activas</h3>
+                    <p class="text-5xl font-bold mt-2" id="dashboardActivePriorities">0</p>
+                </div>
+            </div>
+            <div class="card mt-6">
+                <h3 class="text-xl font-semibold text-[#E76F51] mb-4">Meta Principal de la Semana</h3>
+                <p id="mainGoalDisplay" class="text-lg text-gray-700 italic">Define tu meta principal para esta semana.</p>
+                <button id="editMainGoalBtn" class="btn-secondary mt-4">Editar Meta</button>
+            </div>
+        </section>
+
+        <section id="priorities" class="content-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="prioritiesTitle" class="text-3xl font-bold text-[#3D3B30]">Mis Prioridades</h2>
+                <button id="addPriorityBtn" class="btn-primary">Añadir Prioridad</button>
+            </div>
+            <div id="prioritiesList" class="space-y-4">
+                <!-- Prioridades se renderizarán aquí -->
+            </div>
+            <p id="noPrioritiesMessage" class="text-gray-500 mt-4 hidden">No hay prioridades definidas. ¡Añade una para empezar!</p>
+        </section>
+
+        <section id="todos" class="content-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="todosTitle" class="text-3xl font-bold text-[#3D3B30]">Mis Tareas</h2>
+                <button id="addTodoBtn" class="btn-primary">Añadir Tarea</button>
+            </div>
+            <div class="mb-4 flex space-x-2">
+                <button id="filterTodosAll" class="btn-secondary active-filter" data-filter="all">Todas</button>
+                <button id="filterTodosActive" class="btn-secondary" data-filter="active">Activas</button>
+                <button id="filterTodosCompleted" class="btn-secondary" data-filter="completed">Completadas</button>
+            </div>
+            <div id="todosList" class="space-y-4">
+                <!-- Tareas se renderizarán aquí -->
+            </div>
+            <p id="noTodosMessage" class="text-gray-500 mt-4 hidden">No hay tareas. ¡Es un buen momento para añadir una!</p>
+        </section>
+
+        <section id="habits" class="content-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="habitsTitle" class="text-3xl font-bold text-[#3D3B30]">Rastreador de Hábitos</h2>
+                <button id="addHabitBtn" class="btn-primary">Añadir Hábito</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white rounded-lg shadow-md">
+                    <thead>
+                        <tr class="bg-gray-100 text-left text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                            <th class="py-3 px-4 rounded-tl-lg">Hábito</th>
+                            <th class="py-3 px-2 text-center">L</th>
+                            <th class="py-3 px-2 text-center">M</th>
+                            <th class="py-3 px-2 text-center">X</th>
+                            <th class="py-3 px-2 text-center">J</th>
+                            <th class="py-3 px-2 text-center">V</th>
+                            <th class="py-3 px-2 text-center">S</th>
+                            <th class="py-3 px-2 text-center">D</th>
+                            <th class="py-3 px-4 rounded-tr-lg">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="habitsTableBody" class="divide-y divide-gray-200">
+                        <!-- Hábitos se renderizarán aquí -->
+                    </tbody>
+                </table>
+            </div>
+            <p id="noHabitsMessage" class="text-gray-500 mt-4 hidden">No hay hábitos para rastrear. ¡Empieza uno hoy!</p>
+        </section>
+
+        <section id="daily" class="content-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="dailyTitle" class="text-3xl font-bold text-[#3D3B30]">Plan Diario</h2>
+                <button id="addDailyEventBtn" class="btn-primary">Añadir Evento</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Días de la semana se renderizarán aquí -->
+            </div>
+            <p id="noDailyEventsMessage" class="text-gray-500 mt-4 hidden">No hay eventos planificados para esta semana.</p>
+        </section>
+
+        <section id="notes" class="content-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="notesTitle" class="text-3xl font-bold text-[#3D3B30]">Notas Sin Fecha</h2>
+                <button id="addNoteBtn" class="btn-primary">Añadir Nota</button>
+            </div>
+            <div id="notesList" class="space-y-4">
+                <!-- Notas se renderizarán aquí -->
+            </div>
+            <p id="noNotesMessage" class="text-gray-500 mt-4 hidden">No hay notas. ¡Captura tus ideas aquí!</p>
+        </section>
+
+        <section id="next-week" class="content-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="nextWeekTitle" class="text-3xl font-bold text-[#3D3B30]">Plan para la Próxima Semana</h2>
+                <button id="addNextWeekItemBtn" class="btn-primary">Añadir Elemento</button>
+            </div>
+            <div id="nextWeekList" class="space-y-4">
+                <!-- Elementos de la próxima semana se renderizarán aquí -->
+            </div>
+            <p id="noNextWeekItemsMessage" class="text-gray-500 mt-4 hidden">Nada planificado para la próxima semana todavía.</p>
+        </section>
+
+    </main>
+
+    <!-- Tailwind CSS CDN movido al final del body para no bloquear el renderizado -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        (function() {
+            'use strict';
+            console.log('Script principal de la aplicación iniciado.'); // Log de depuración
+
+            let mainGoal = "Define tu meta principal para esta semana.";
+            let priorities = [];
+            let todos = [];
+            let habits = [];
+            let dailyEvents = {};
+            let notes = [];
+            let nextWeekItems = [];
+
+            let currentFilter = 'all';
+            let currentEditingItem = null;
+            let currentEditingType = null;
+            let currentDeleteCallback = null;
+
+            const sections = document.querySelectorAll('.content-section');
+            const navItems = document.querySelectorAll('.nav-item');
+            const itemModal = document.getElementById('itemModal');
+            const confirmModal = document.getElementById('confirmModal');
+            const itemForm = document.getElementById('itemForm');
+            const itemIdInput = document.getElementById('itemId');
+            const itemTypeInput = document.getElementById('itemType');
+            const modalTitle = document.getElementById('modalTitle');
+            const formFieldsContainer = document.getElementById('formFields');
+            const confirmMessage = document.getElementById('confirmMessage');
+
+            const elements = {
+                dashboardTasksCompleted: document.getElementById('dashboardTasksCompleted'),
+                dashboardHabitsCompleted: document.getElementById('dashboardHabitsCompleted'),
+                dashboardActivePriorities: document.getElementById('dashboardActivePriorities'),
+                mainGoalDisplay: document.getElementById('mainGoalDisplay'),
+                prioritiesList: document.getElementById('prioritiesList'),
+                noPrioritiesMessage: document.getElementById('noPrioritiesMessage'),
+                todosList: document.getElementById('todosList'),
+                noTodosMessage: document.getElementById('noTodosMessage'),
+                habitsTableBody: document.getElementById('habitsTableBody'),
+                noHabitsMessage: document.getElementById('noHabitsMessage'),
+                dailySection: document.getElementById('daily'),
+                noDailyEventsMessage: document.getElementById('noDailyEventsMessage'),
+                notesList: document.getElementById('notesList'),
+                noNotesMessage: document.getElementById('noNotesMessage'),
+                nextWeekList: document.getElementById('nextWeekList'),
+                noNextWeekItemsMessage: document.getElementById('noNextWeekItemsMessage')
+            };
+
+            const daysOfWeek = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+            const fullDaysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+            function generateId() {
+                return '_' + Math.random().toString(36).substr(2, 9);
+            }
+
+            function showSection(targetId) {
+                sections.forEach(section => {
+                    section.classList.add('hidden');
+                });
+                document.getElementById(targetId).classList.remove('hidden');
+                
+                const sectionTitleElement = document.getElementById(`${targetId}Title`);
+                if (sectionTitleElement) {
+                    // El texto del H2 ya está en el HTML, no es necesario actualizarlo dinámicamente aquí.
+                }
+
+                navItems.forEach(item => {
+                    if (item.dataset.target === targetId) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+
+                updateDashboard();
+                if (targetId === 'priorities') renderPriorities();
+                if (targetId === 'todos') renderTodos();
+                if (targetId === 'habits') renderHabits();
+                if (targetId === 'daily') renderDailyPlanner();
+                if (targetId === 'notes') renderNotes();
+                if (targetId === 'next-week') renderNextWeekItems();
+            }
+
+            function showModal(title, type, item = null) {
+                modalTitle.textContent = title;
+                itemTypeInput.value = type;
+                itemIdInput.value = item ? item.id : '';
+                currentEditingItem = item;
+                currentEditingType = type;
+                formFieldsContainer.innerHTML = '';
+
+                let fieldsHtml = '';
+                if (type === 'priority' || type === 'todo' || type === 'note' || type === 'nextWeekItem') {
+                    fieldsHtml = `
+                        <div>
+                            <label for="itemText" class="block text-sm font-medium text-gray-700">Descripción</label>
+                            <input type="text" id="itemText" class="mt-1 block w-full" value="${item ? item.text : ''}" required>
+                        </div>
+                    `;
+                } else if (type === 'mainGoal') {
+                    fieldsHtml = `
+                        <div>
+                            <label for="mainGoalText" class="block text-sm font-medium text-gray-700">Meta Principal</label>
+                            <textarea id="mainGoalText" rows="3" class="mt-1 block w-full" required>${item ? item.text : mainGoal}</textarea>
+                        </div>
+                    `;
+                } else if (type === 'habit') {
+                    fieldsHtml = `
+                        <div>
+                            <label for="habitName" class="block text-sm font-medium text-gray-700">Nombre del Hábito</label>
+                            <input type="text" id="habitName" class="mt-1 block w-full" value="${item ? item.name : ''}" required>
+                        </div>
+                    `;
+                } else if (type === 'dailyEvent') {
+                    fieldsHtml = `
+                        <div>
+                            <label for="eventText" class="block text-sm font-medium text-gray-700">Evento</label>
+                            <input type="text" id="eventText" class="mt-1 block w-full" value="${item ? item.text : ''}" required>
+                        </div>
+                        <div>
+                            <label for="eventDay" class="block text-sm font-medium text-gray-700">Día</label>
+                            <select id="eventDay" class="mt-1 block w-full" required>
+                                ${fullDaysOfWeek.map((day, index) => `<option value="${index}" ${item && item.day === index ? 'selected' : ''}>${day}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                }
+                formFieldsContainer.innerHTML = fieldsHtml;
+                itemModal.classList.remove('hidden');
+            }
+
+            function hideModal() {
+                itemModal.classList.add('hidden');
+                itemForm.reset();
+                currentEditingItem = null;
+                currentEditingType = null;
+            }
+
+            function showConfirmModal(message, callback) {
+                confirmMessage.textContent = message;
+                currentDeleteCallback = callback;
+                confirmModal.classList.remove('hidden');
+            }
+
+            function hideConfirmModal() {
+                confirmModal.classList.add('hidden');
+                currentDeleteCallback = null;
+            }
+
+            itemForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const type = itemTypeInput.value;
+                const id = itemIdInput.value;
+
+                if (type === 'priority') {
+                    const text = document.getElementById('itemText').value;
+                    if (id) {
+                        const index = priorities.findIndex(p => p.id === id);
+                        if (index !== -1) priorities[index].text = text;
+                    } else {
+                        priorities.push({ id: generateId(), text: text, completed: false });
+                    }
+                    renderPriorities();
+                } else if (type === 'mainGoal') {
+                    mainGoal = document.getElementById('mainGoalText').value;
+                    elements.mainGoalDisplay.textContent = mainGoal;
+                } else if (type === 'todo') {
+                    const text = document.getElementById('itemText').value;
+                    if (id) {
+                        const index = todos.findIndex(t => t.id === id);
+                        if (index !== -1) todos[index].text = text;
+                    } else {
+                        todos.push({ id: generateId(), text: text, completed: false });
+                    }
+                    renderTodos();
+                } else if (type === 'habit') {
+                    const name = document.getElementById('habitName').value;
+                    if (id) {
+                        const index = habits.findIndex(h => h.id === id);
+                        if (index !== -1) habits[index].name = name;
+                    } else {
+                        habits.push({ id: generateId(), name: name, dailyCompletion: Array(7).fill(false) });
+                    }
+                    renderHabits();
+                } else if (type === 'dailyEvent') {
+                    const text = document.getElementById('eventText').value;
+                    const day = parseInt(document.getElementById('eventDay').value);
+                    if (id) {
+                        for (const d in dailyEvents) {
+                            const index = dailyEvents[d].findIndex(e => e.id === id);
+                            if (index !== -1) {
+                                if (parseInt(d) === day) {
+                                    dailyEvents[d][index].text = text;
+                                } else {
+                                    const eventToMove = dailyEvents[d].splice(index, 1)[0];
+                                    eventToMove.day = day;
+                                    if (!dailyEvents[day]) dailyEvents[day] = [];
+                                    dailyEvents[day].push(eventToMove);
+                                }
+                                break;
+                            }
+                        }
+                    } else {
+                        if (!dailyEvents[day]) dailyEvents[day] = [];
+                        dailyEvents[day].push({ id: generateId(), text: text, day: day });
+                    }
+                    renderDailyPlanner();
+                } else if (type === 'note') {
+                    const text = document.getElementById('itemText').value;
+                    if (id) {
+                        const index = notes.findIndex(n => n.id === id);
+                        if (index !== -1) notes[index].text = text;
+                    } else {
+                        notes.push({ id: generateId(), text: text });
+                    }
+                    renderNotes();
+                } else if (type === 'nextWeekItem') {
+                    const text = document.getElementById('itemText').value;
+                    if (id) {
+                        const index = nextWeekItems.findIndex(n => n.id === id);
+                        if (index !== -1) nextWeekItems[index].text = text;
+                    } else {
+                        nextWeekItems.push({ id: generateId(), text: text });
+                    }
+                    renderNextWeekItems();
+                }
+                hideModal();
+                updateDashboard();
+            });
+
+            document.getElementById('cancelModalBtn').addEventListener('click', hideModal);
+            document.getElementById('cancelConfirmBtn').addEventListener('click', hideConfirmModal);
+            document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+                if (currentDeleteCallback) {
+                    currentDeleteCallback();
+                }
+                hideConfirmModal();
+            });
+
+            // Render Functions
+            function renderPriorities() {
+                elements.prioritiesList.innerHTML = '';
+                if (priorities.length === 0) {
+                    elements.noPrioritiesMessage.classList.remove('hidden');
+                } else {
+                    elements.noPrioritiesMessage.classList.add('hidden');
+                    priorities.forEach(p => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'card flex items-center justify-between';
+                        itemDiv.innerHTML = `
+                            <div class="flex items-center">
+                                <input type="checkbox" class="checkbox-custom mr-3" data-id="${p.id}" ${p.completed ? 'checked' : ''}>
+                                <span class="${p.completed ? 'line-through text-gray-500' : 'text-gray-800'}">${p.text}</span>
+                            </div>
+                            <div>
+                                <button class="btn-secondary text-sm px-2 py-1 edit-btn" data-id="${p.id}" data-type="priority" aria-label="Editar prioridad">Editar</button>
+                                <button class="btn-danger text-sm px-2 py-1 delete-btn" data-id="${p.id}" data-type="priority" aria-label="Eliminar prioridad">Eliminar</button>
+                            </div>
+                        `;
+                        elements.prioritiesList.appendChild(itemDiv);
+                    });
+                }
+            }
+
+            function renderTodos() {
+                elements.todosList.innerHTML = '';
+                const filteredTodos = todos.filter(t => {
+                    if (currentFilter === 'active') return !t.completed;
+                    if (currentFilter === 'completed') return t.completed;
+                    return true;
+                });
+
+                if (filteredTodos.length === 0) {
+                    elements.noTodosMessage.classList.remove('hidden');
+                } else {
+                    elements.noTodosMessage.classList.add('hidden');
+                    filteredTodos.forEach(t => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'card flex items-center justify-between';
+                        itemDiv.innerHTML = `
+                            <div class="flex items-center">
+                                <input type="checkbox" class="checkbox-custom mr-3" data-id="${t.id}" ${t.completed ? 'checked' : ''}>
+                                <span class="${t.completed ? 'line-through text-gray-500' : 'text-gray-800'}">${t.text}</span>
+                            </div>
+                            <div>
+                                <button class="btn-secondary text-sm px-2 py-1 edit-btn" data-id="${t.id}" data-type="todo" aria-label="Editar tarea">Editar</button>
+                                <button class="btn-danger text-sm px-2 py-1 delete-btn" data-id="${t.id}" data-type="todo" aria-label="Eliminar tarea">Eliminar</button>
+                            </div>
+                        `;
+                        elements.todosList.appendChild(itemDiv);
+                    });
+                }
+            }
+
+            function renderHabits() {
+                elements.habitsTableBody.innerHTML = '';
+                if (habits.length === 0) {
+                    elements.noHabitsMessage.classList.remove('hidden');
+                } else {
+                    elements.noHabitsMessage.classList.add('hidden');
+                    habits.forEach(h => {
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-gray-50';
+                        row.innerHTML = `
+                            <td class="py-3 px-4 whitespace-nowrap text-gray-800">${h.name}</td>
+                            ${daysOfWeek.map((day, index) => `
+                                <td class="py-3 px-2 text-center">
+                                    <input type="checkbox" class="checkbox-custom" data-id="${h.id}" data-day-index="${index}" ${h.dailyCompletion[index] ? 'checked' : ''} aria-label="Marcar hábito para ${fullDaysOfWeek[index]}">
+                                </td>
+                            `).join('')}
+                            <td class="py-3 px-4 whitespace-nowrap text-right">
+                                <button class="btn-secondary text-sm px-2 py-1 edit-btn" data-id="${h.id}" data-type="habit" aria-label="Editar hábito">Editar</button>
+                                <button class="btn-danger text-sm px-2 py-1 delete-btn" data-id="${h.id}" data-type="habit" aria-label="Eliminar hábito">Eliminar</button>
+                            </td>
+                        `;
+                        elements.habitsTableBody.appendChild(row);
+                    });
+                }
+            }
+
+            function renderDailyPlanner() {
+                elements.dailySection.querySelector('.grid').innerHTML = '';
+                const hasEvents = Object.values(dailyEvents).some(arr => arr.length > 0);
+                if (!hasEvents) {
+                    elements.noDailyEventsMessage.classList.remove('hidden');
+                } else {
+                    elements.noDailyEventsMessage.classList.add('hidden');
+                }
+
+                fullDaysOfWeek.forEach((dayName, dayIndex) => {
+                    const dayCard = document.createElement('div');
+                    dayCard.className = 'card';
+                    dayCard.innerHTML = `
+                        <h3 class="text-xl font-bold text-[#4A6CFA] mb-3">${dayName}</h3>
+                        <div id="dailyEvents-${dayIndex}" class="space-y-2">
+                            <!-- Eventos del día se renderizarán aquí -->
+                        </div>
+                        <p class="text-gray-500 text-sm mt-2 ${dailyEvents[dayIndex] && dailyEvents[dayIndex].length > 0 ? 'hidden' : ''}">Nada planeado.</p>
+                    `;
+                    elements.dailySection.querySelector('.grid').appendChild(dayCard);
+
+                    const eventsForDay = dailyEvents[dayIndex] || [];
+                    const eventsContainer = dayCard.querySelector(`#dailyEvents-${dayIndex}`);
+                    eventsForDay.forEach(event => {
+                        const eventDiv = document.createElement('div');
+                        eventDiv.className = 'flex items-center justify-between text-gray-800 text-sm bg-gray-50 p-2 rounded-md';
+                        eventDiv.innerHTML = `
+                            <span>${event.text}</span>
+                            <div>
+                                <button class="btn-secondary text-xs px-1 py-0.5 edit-btn" data-id="${event.id}" data-type="dailyEvent" aria-label="Editar evento diario">Editar</button>
+                                <button class="btn-danger text-xs px-1 py-0.5 delete-btn" data-id="${event.id}" data-type="dailyEvent" aria-label="Eliminar evento diario">Eliminar</button>
+                            </div>
+                        `;
+                        eventsContainer.appendChild(eventDiv);
+                    });
+                });
+            }
+
+            function renderNotes() {
+                elements.notesList.innerHTML = '';
+                if (notes.length === 0) {
+                    elements.noNotesMessage.classList.remove('hidden');
+                } else {
+                    elements.noNotesMessage.classList.add('hidden');
+                    notes.forEach(n => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'card flex items-center justify-between';
+                        itemDiv.innerHTML = `
+                            <span class="text-gray-800">${n.text}</span>
+                            <div>
+                                <button class="btn-secondary text-sm px-2 py-1 edit-btn" data-id="${n.id}" data-type="note" aria-label="Editar nota">Editar</button>
+                                <button class="btn-danger text-sm px-2 py-1 delete-btn" data-id="${n.id}" data-type="note" aria-label="Eliminar nota">Eliminar</button>
+                            </div>
+                        `;
+                        elements.notesList.appendChild(itemDiv);
+                    });
+                }
+            }
+
+            function renderNextWeekItems() {
+                elements.nextWeekList.innerHTML = '';
+                if (nextWeekItems.length === 0) {
+                    elements.noNextWeekItemsMessage.classList.remove('hidden');
+                } else {
+                    elements.noNextWeekItemsMessage.classList.add('hidden');
+                    nextWeekItems.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'card flex items-center justify-between';
+                        itemDiv.innerHTML = `
+                            <span class="text-gray-800">${item.text}</span>
+                            <div>
+                                <button class="btn-secondary text-sm px-2 py-1 edit-btn" data-id="${item.id}" data-type="nextWeekItem" aria-label="Editar elemento de próxima semana">Editar</button>
+                                <button class="btn-danger text-sm px-2 py-1 delete-btn" data-id="${item.id}" data-type="nextWeekItem" aria-label="Eliminar elemento de próxima semana">Eliminar</button>
+                            </div>
+                        `;
+                        elements.nextWeekList.appendChild(itemDiv);
+                    });
+                }
+            }
+
+            function updateDashboard() {
+                const completedTodos = todos.filter(t => t.completed).length;
+                const today = new Date().getDay();
+                const completedHabitsToday = habits.filter(h => h.dailyCompletion[today === 0 ? 6 : today - 1]).length; // Adjust for Sunday being 0
+                const activePriorities = priorities.filter(p => !p.completed).length;
+
+                elements.dashboardTasksCompleted.textContent = completedTodos;
+                elements.dashboardHabitsCompleted.textContent = completedHabitsToday;
+                elements.dashboardActivePriorities.textContent = activePriorities;
+                elements.mainGoalDisplay.textContent = mainGoal;
+            }
+
+            // Event Listeners for Navigation
+            navItems.forEach(item => {
+                item.addEventListener('click', () => showSection(item.dataset.target));
+            });
+
+            // Event Listeners for CRUD buttons (delegation)
+            document.addEventListener('click', (e) => {
+                console.log('Document click event detected. Target:', e.target); // Log de depuración
+                if (e.target.classList.contains('edit-btn')) {
+                    console.log('Botón de edición clickeado.'); // Log de depuración
+                    const id = e.target.dataset.id;
+                    const type = e.target.dataset.type;
+                    let itemToEdit = null;
+                    if (type === 'priority') itemToEdit = priorities.find(p => p.id === id);
+                    else if (type === 'todo') itemToEdit = todos.find(t => t.id === id);
+                    else if (type === 'habit') itemToEdit = habits.find(h => h.id === id);
+                    else if (type === 'dailyEvent') {
+                        for (const d in dailyEvents) {
+                            itemToEdit = dailyEvents[d].find(ev => ev.id === id);
+                            if (itemToEdit) break;
+                        }
+                    }
+                    else if (type === 'note') itemToEdit = notes.find(n => n.id === id);
+                    else if (type === 'nextWeekItem') itemToEdit = nextWeekItems.find(n => n.id === id);
+                    showModal(`Editar ${type === 'priority' ? 'Prioridad' : type === 'todo' ? 'Tarea' : type === 'habit' ? 'Hábito' : type === 'dailyEvent' ? 'Evento Diario' : type === 'note' ? 'Nota' : 'Elemento'}`, type, itemToEdit);
+                } else if (e.target.classList.contains('delete-btn')) {
+                    console.log('Botón de eliminar clickeado.'); // Log de depuración
+                    const id = e.target.dataset.id;
+                    const type = e.target.dataset.type;
+                    showConfirmModal(`¿Estás seguro de que quieres eliminar este ${type === 'priority' ? 'prioridad' : type === 'todo' ? 'tarea' : type === 'habit' ? 'hábito' : type === 'dailyEvent' ? 'evento' : type === 'note' ? 'nota' : 'elemento'}?`, () => {
+                        if (type === 'priority') {
+                            priorities = priorities.filter(p => p.id !== id);
+                            renderPriorities();
+                        } else if (type === 'todo') {
+                            todos = todos.filter(t => t.id !== id);
+                            renderTodos();
+                        } else if (type === 'habit') {
+                            habits = habits.filter(h => h.id !== id);
+                            renderHabits();
+                        } else if (type === 'dailyEvent') {
+                            for (const day in dailyEvents) {
+                                dailyEvents[day] = dailyEvents[day].filter(ev => ev.id !== id);
+                            }
+                            renderDailyPlanner();
+                        } else if (type === 'note') {
+                            notes = notes.filter(n => n.id !== id);
+                            renderNotes();
+                        } else if (type === 'nextWeekItem') {
+                            nextWeekItems = nextWeekItems.filter(n => n.id !== id);
+                            renderNextWeekItems();
+                        }
+                        updateDashboard();
+                    });
+                } else if (e.target.classList.contains('checkbox-custom')) {
+                    console.log('Checkbox clickeado.'); // Log de depuración
+                    const id = e.target.dataset.id;
+                    const isChecked = e.target.checked;
+                    if (e.target.closest('#prioritiesList')) {
+                        const priority = priorities.find(p => p.id === id);
+                        if (priority) priority.completed = isChecked;
+                        renderPriorities();
+                    } else if (e.target.closest('#todosList')) {
+                        const todo = todos.find(t => t.id === id);
+                        if (todo) todo.completed = isChecked;
+                        renderTodos();
+                    } else if (e.target.closest('#habitsTableBody')) {
+                        const habit = habits.find(h => h.id === id);
+                        const dayIndex = parseInt(e.target.dataset.dayIndex);
+                        if (habit) habit.dailyCompletion[dayIndex] = isChecked;
+                        updateDashboard();
+                    }
+                }
+            });
+
+            // Specific Add Buttons
+            document.getElementById('addPriorityBtn').addEventListener('click', () => showModal('Añadir Nueva Prioridad', 'priority'));
+            document.getElementById('editMainGoalBtn').addEventListener('click', () => showModal('Editar Meta Principal', 'mainGoal', { text: mainGoal }));
+            document.getElementById('addTodoBtn').addEventListener('click', () => showModal('Añadir Nueva Tarea', 'todo'));
+            document.getElementById('addHabitBtn').addEventListener('click', () => showModal('Añadir Nuevo Hábito', 'habit'));
+            document.getElementById('addDailyEventBtn').addEventListener('click', () => showModal('Añadir Nuevo Evento Diario', 'dailyEvent'));
+            document.getElementById('addNoteBtn').addEventListener('click', () => showModal('Añadir Nueva Nota', 'note'));
+            document.getElementById('addNextWeekItemBtn').addEventListener('click', () => showModal('Añadir Elemento para Próxima Semana', 'nextWeekItem'));
+
+            // To-Do Filter Buttons
+            document.getElementById('filterTodosAll').addEventListener('click', () => { currentFilter = 'all'; renderTodos(); document.querySelectorAll('#todos .btn-secondary').forEach(btn => btn.classList.remove('active-filter')); document.getElementById('filterTodosAll').classList.add('active-filter'); });
+            document.getElementById('filterTodosActive').addEventListener('click', () => { currentFilter = 'active'; renderTodos(); document.querySelectorAll('#todos .btn-secondary').forEach(btn => btn.classList.remove('active-filter')); document.getElementById('filterTodosActive').classList.add('active-filter'); });
+            document.getElementById('filterTodosCompleted').addEventListener('click', () => { currentFilter = 'active'; renderTodos(); document.querySelectorAll('#todos .btn-secondary').forEach(btn => btn.classList.remove('active-filter')); document.getElementById('filterTodosCompleted').classList.add('active-filter'); });
+
+
+            // Initial render
+            showSection('dashboard');
+            updateDashboard();
+            console.log('showSection y updateDashboard llamados.'); // Log de depuración
+
+            // Registro del Service Worker
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', async () => {
+                    try {
+                        // Se cambió la ruta a '/service-worker.js' (ruta absoluta desde la raíz)
+                        // para intentar resolver el problema de URL no válida en entornos de blob.
+                        // La ruta absoluta es más robusta en muchos escenarios de hosting.
+                        const response = await fetch('/service-worker.js'); 
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const serviceWorkerCode = await response.text();
+
+                        const serviceWorkerBlob = new Blob([serviceWorkerCode], { type: 'application/javascript' });
+                        const serviceWorkerBlobUrl = URL.createObjectURL(serviceWorkerBlob);
+
+                        const registration = await navigator.serviceWorker.register(serviceWorkerBlobUrl);
+                        console.log('Service Worker registrado con éxito:', registration);
+
+                        URL.revokeObjectURL(serviceWorkerBlobUrl);
+
+                    } catch (error) {
+                        console.error('Fallo en el registro del Service Worker:', error);
+                    }
+                });
+            } else {
+                console.warn('Service Workers no soportados en este navegador.'); // Log de depuración
+            }
+            console.log('Fin del script principal.'); // Log de depuración
+        })();
+    </script>
+</body>
+</html>
+

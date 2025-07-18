@@ -1,0 +1,35 @@
+{
+  "name": "Mi Planificador Productivo",
+  "short_name": "Planificador",
+  "description": "Tu herramienta personal para organizar prioridades, tareas y hábitos.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#F8F7F4",
+  "theme_color": "#4A6CFA",
+  "icons": [
+      {
+        "src": "icons/manifest-icon-192.maskable.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "icons/manifest-icon-192.maskable.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "maskable"
+      },
+      {
+        "src": "icons/manifest-icon-512.maskable.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "icons/manifest-icon-512.maskable.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "maskable"
+      }
+    ]
+}
