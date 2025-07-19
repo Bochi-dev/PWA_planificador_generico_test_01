@@ -927,75 +927,15 @@
             updateDashboard();
             console.log('showSection y updateDashboard llamados.'); // Log de depuración
 
-            // Contenido del Service Worker (debe ser el contenido de tu archivo service-worker.js)
-            const serviceWorkerCodeString = `
-                const CACHE_NAME = 'mi-planificador-cache-v1';
-                const urlsToCache = [
-                    '/',
-                    '/index.html',
-                    '/manifest.json',
-                    // Asegúrate de que tus iconos estén en la carpeta 'icons' y las rutas sean correctas
-                    '/icons/icon-192x192.png',
-                    '/icons/icon-512x512.png',
-                    // Agrega aquí todas las demás rutas de tus recursos estáticos
-                    // Por ejemplo:
-                    // '/css/style.css',
-                    // '/js/app.js',
-                    // '/offline.html' // Si tienes una página offline
-                ];
-
-                self.addEventListener('install', (event) => {
-                    event.waitUntil(
-                        caches.open(CACHE_NAME)
-                            .then((cache) => {
-                                console.log('Service Worker: Cache abierta');
-                                return cache.addAll(urlsToCache);
-                            })
-                            .catch((error) => {
-                                console.error('Service Worker: Fallo al cachear URLs:', error);
-                            })
-                    );
-                });
-
-                self.addEventListener('fetch', (event) => {
-                    event.respondWith(
-                        caches.match(event.request)
-                            .then((response) => {
-                                if (response) {
-                                    return response; // Si está en caché, lo devuelve
-                                }
-                                return fetch(event.request); // Si no, lo busca en la red
-                            })
-                    );
-                });
-
-                self.addEventListener('activate', (event) => {
-                    const cacheWhitelist = [CACHE_NAME];
-                    event.waitUntil(
-                        caches.keys().then((cacheNames) => {
-                            return Promise.all(
-                                cacheNames.map((cacheName) => {
-                                    if (cacheWhitelist.indexOf(cacheName) === -1) {
-                                        return caches.delete(cacheName); // Elimina cachés antiguas
-                                    }
-                                })
-                            );
-                        })
-                    );
-                });
-            `;
-
             // Registro del Service Worker
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', async () => {
                     try {
-                        const serviceWorkerBlob = new Blob([serviceWorkerCodeString], { type: 'application/javascript' });
-                        const serviceWorkerBlobUrl = URL.createObjectURL(serviceWorkerBlob);
-
-                        const registration = await navigator.serviceWorker.register(serviceWorkerBlobUrl);
+                        // Se vuelve a la forma estándar de registrar el Service Worker
+                        // para entornos de hosting reales como GitHub Pages.
+                        // El archivo service-worker.js DEBE estar en la raíz del despliegue.
+                        const registration = await navigator.serviceWorker.register('/service-worker.js');
                         console.log('Service Worker registrado con éxito:', registration);
-
-                        URL.revokeObjectURL(serviceWorkerBlobUrl); // Libera la URL del objeto Blob
 
                     } catch (error) {
                         console.error('Fallo en el registro del Service Worker:', error);
