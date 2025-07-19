@@ -1,0 +1,19 @@
+(index):64 cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+(anonymous) @ (index):64
+mi_planificador_productivo_testApp/:363 Script principal de la aplicación iniciado.
+mi_planificador_productivo_testApp/:864 showSection y updateDashboard llamados.
+mi_planificador_productivo_testApp/:894 Fin del script principal.
+service-worker.js:1 
+        
+        
+       Failed to load resource: the server responded with a status of 404 ()
+mi_planificador_productivo_testApp/:888 Fallo en el registro del Service Worker: Error: HTTP error! status: 404
+    at mi_planificador_productivo_testApp/:875:35
+(anonymous) @ mi_planificador_productivo_testApp/:888
+mi_planificador_productivo_testApp/:779 Document click event detected. Target: <div id=​"navTodos" class=​"nav-item" data-target=​"todos">​…​</div>​flex
+mi_planificador_productivo_testApp/:779 Document click event detected. Target: <button id=​"addTodoBtn" class=​"btn-primary">​Añadir Tarea​</button>​
+mi_planificador_productivo_testApp/:779 Document click event detected. Target: <input type=​"text" id=​"itemText" class=​"mt-1 block w-full" value required>​
+mi_planificador_productivo_testApp/:779 Document click event detected. Target: <button type=​"submit" class=​"btn-primary">​Guardar​</button>​
+mi_planificador_productivo_testApp/:779 Document click event detected. Target: <input type=​"checkbox" class=​"checkbox-custom mr-3" data-id=​"_ahwmdrj6s">​
+mi_planificador_productivo_testApp/:826 Checkbox clickeado.
+mi_planificador_productivo_testApp/:779 Document click event detected. Target: <div id=​"navDashboard" class=​"nav-item active" data-target=​"dashboard">​…​</div>​flex

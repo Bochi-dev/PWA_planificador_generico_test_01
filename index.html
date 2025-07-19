@@ -412,6 +412,65 @@
                 return '_' + Math.random().toString(36).substr(2, 9);
             }
 
+            // --- Funciones de guardado y carga de datos con localStorage ---
+            function saveData() {
+                try {
+                    localStorage.setItem('mainGoal', JSON.stringify(mainGoal));
+                    localStorage.setItem('priorities', JSON.stringify(priorities));
+                    localStorage.setItem('todos', JSON.stringify(todos));
+                    localStorage.setItem('habits', JSON.stringify(habits));
+                    localStorage.setItem('dailyEvents', JSON.stringify(dailyEvents));
+                    localStorage.setItem('notes', JSON.stringify(notes));
+                    localStorage.setItem('nextWeekItems', JSON.stringify(nextWeekItems));
+                    console.log('Datos guardados en localStorage.');
+                } catch (e) {
+                    console.error('Error al guardar datos en localStorage:', e);
+                }
+            }
+
+            function loadData() {
+                try {
+                    const storedMainGoal = localStorage.getItem('mainGoal');
+                    if (storedMainGoal) {
+                        mainGoal = JSON.parse(storedMainGoal);
+                    }
+
+                    const storedPriorities = localStorage.getItem('priorities');
+                    if (storedPriorities) {
+                        priorities = JSON.parse(storedPriorities);
+                    }
+
+                    const storedTodos = localStorage.getItem('todos');
+                    if (storedTodos) {
+                        todos = JSON.parse(storedTodos);
+                    }
+
+                    const storedHabits = localStorage.getItem('habits');
+                    if (storedHabits) {
+                        habits = JSON.parse(storedHabits);
+                    }
+
+                    const storedDailyEvents = localStorage.getItem('dailyEvents');
+                    if (storedDailyEvents) {
+                        dailyEvents = JSON.parse(storedDailyEvents);
+                    }
+
+                    const storedNotes = localStorage.getItem('notes');
+                    if (storedNotes) {
+                        notes = JSON.parse(storedNotes);
+                    }
+
+                    const storedNextWeekItems = localStorage.getItem('nextWeekItems');
+                    if (storedNextWeekItems) {
+                        nextWeekItems = JSON.parse(storedNextWeekItems);
+                    }
+                    console.log('Datos cargados de localStorage.');
+                } catch (e) {
+                    console.error('Error al cargar datos de localStorage:', e);
+                }
+            }
+            // --- Fin de funciones de guardado y carga ---
+
             function showSection(targetId) {
                 sections.forEach(section => {
                     section.classList.add('hidden');
@@ -583,6 +642,7 @@
                     }
                     renderNextWeekItems();
                 }
+                saveData(); // Guardar datos después de cualquier modificación
                 hideModal();
                 updateDashboard();
             });
@@ -593,6 +653,7 @@
                 if (currentDeleteCallback) {
                     currentDeleteCallback();
                 }
+                saveData(); // Guardar datos después de eliminar
                 hideConfirmModal();
             });
 
@@ -820,6 +881,7 @@
                             nextWeekItems = nextWeekItems.filter(n => n.id !== id);
                             renderNextWeekItems();
                         }
+                        saveData(); // Guardar datos después de eliminar
                         updateDashboard();
                     });
                 } else if (e.target.classList.contains('checkbox-custom')) {
@@ -840,6 +902,7 @@
                         if (habit) habit.dailyCompletion[dayIndex] = isChecked;
                         updateDashboard();
                     }
+                    saveData(); // Guardar datos después de cambiar el estado del checkbox
                 }
             });
 
@@ -855,34 +918,84 @@
             // To-Do Filter Buttons
             document.getElementById('filterTodosAll').addEventListener('click', () => { currentFilter = 'all'; renderTodos(); document.querySelectorAll('#todos .btn-secondary').forEach(btn => btn.classList.remove('active-filter')); document.getElementById('filterTodosAll').classList.add('active-filter'); });
             document.getElementById('filterTodosActive').addEventListener('click', () => { currentFilter = 'active'; renderTodos(); document.querySelectorAll('#todos .btn-secondary').forEach(btn => btn.classList.remove('active-filter')); document.getElementById('filterTodosActive').classList.add('active-filter'); });
-            document.getElementById('filterTodosCompleted').addEventListener('click', () => { currentFilter = 'active'; renderTodos(); document.querySelectorAll('#todos .btn-secondary').forEach(btn => btn.classList.remove('active-filter')); document.getElementById('filterTodosCompleted').classList.add('active-filter'); });
+            document.getElementById('filterTodosCompleted').addEventListener('click', () => { currentFilter = 'completed'; renderTodos(); document.querySelectorAll('#todos .btn-secondary').forEach(btn => btn.classList.remove('active-filter')); document.getElementById('filterTodosCompleted').classList.add('active-filter'); });
 
 
-            // Initial render
+            // Initial load of data and render
+            loadData(); // Cargar datos al inicio
             showSection('dashboard');
             updateDashboard();
             console.log('showSection y updateDashboard llamados.'); // Log de depuración
+
+            // Contenido del Service Worker (debe ser el contenido de tu archivo service-worker.js)
+            const serviceWorkerCodeString = `
+                const CACHE_NAME = 'mi-planificador-cache-v1';
+                const urlsToCache = [
+                    '/',
+                    '/index.html',
+                    '/manifest.json',
+                    // Asegúrate de que tus iconos estén en la carpeta 'icons' y las rutas sean correctas
+                    '/icons/icon-192x192.png',
+                    '/icons/icon-512x512.png',
+                    // Agrega aquí todas las demás rutas de tus recursos estáticos
+                    // Por ejemplo:
+                    // '/css/style.css',
+                    // '/js/app.js',
+                    // '/offline.html' // Si tienes una página offline
+                ];
+
+                self.addEventListener('install', (event) => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME)
+                            .then((cache) => {
+                                console.log('Service Worker: Cache abierta');
+                                return cache.addAll(urlsToCache);
+                            })
+                            .catch((error) => {
+                                console.error('Service Worker: Fallo al cachear URLs:', error);
+                            })
+                    );
+                });
+
+                self.addEventListener('fetch', (event) => {
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then((response) => {
+                                if (response) {
+                                    return response; // Si está en caché, lo devuelve
+                                }
+                                return fetch(event.request); // Si no, lo busca en la red
+                            })
+                    );
+                });
+
+                self.addEventListener('activate', (event) => {
+                    const cacheWhitelist = [CACHE_NAME];
+                    event.waitUntil(
+                        caches.keys().then((cacheNames) => {
+                            return Promise.all(
+                                cacheNames.map((cacheName) => {
+                                    if (cacheWhitelist.indexOf(cacheName) === -1) {
+                                        return caches.delete(cacheName); // Elimina cachés antiguas
+                                    }
+                                })
+                            );
+                        })
+                    );
+                });
+            `;
 
             // Registro del Service Worker
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', async () => {
                     try {
-                        // Se cambió la ruta a '/service-worker.js' (ruta absoluta desde la raíz)
-                        // para intentar resolver el problema de URL no válida en entornos de blob.
-                        // La ruta absoluta es más robusta en muchos escenarios de hosting.
-                        const response = await fetch('/service-worker.js'); 
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        const serviceWorkerCode = await response.text();
-
-                        const serviceWorkerBlob = new Blob([serviceWorkerCode], { type: 'application/javascript' });
+                        const serviceWorkerBlob = new Blob([serviceWorkerCodeString], { type: 'application/javascript' });
                         const serviceWorkerBlobUrl = URL.createObjectURL(serviceWorkerBlob);
 
                         const registration = await navigator.serviceWorker.register(serviceWorkerBlobUrl);
                         console.log('Service Worker registrado con éxito:', registration);
 
-                        URL.revokeObjectURL(serviceWorkerBlobUrl);
+                        URL.revokeObjectURL(serviceWorkerBlobUrl); // Libera la URL del objeto Blob
 
                     } catch (error) {
                         console.error('Fallo en el registro del Service Worker:', error);
