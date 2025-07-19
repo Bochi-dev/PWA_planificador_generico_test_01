@@ -40,7 +40,40 @@
         .sidebar {
             background-color: #FFFFFF;
             box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            transition: width 0.3s ease-in-out, padding 0.3s ease-in-out; /* Transición para el ancho y el padding */
+            overflow: hidden; /* Oculta el contenido al colapsar */
+            position: relative; /* Para el botón de toggle */
         }
+        .sidebar-expanded {
+            width: 256px; /* w-64 en Tailwind */
+            padding: 1.5rem; /* p-6 en Tailwind */
+        }
+        .sidebar-collapsed {
+            width: 80px; /* Ancho reducido */
+            padding: 1.5rem 0.5rem; /* Padding reducido */
+        }
+        .sidebar-collapsed .nav-item span {
+            margin-right: 0; /* Elimina el margen del icono */
+        }
+        .sidebar-collapsed .nav-item span + span { /* Oculta el texto de los items de navegación */
+            display: none;
+        }
+        .sidebar-collapsed .nav-item {
+            justify-content: center; /* Centra el icono */
+            padding: 0.75rem 0; /* Ajusta el padding para centrar */
+        }
+        .sidebar-collapsed .text-3xl,
+        .sidebar-collapsed .text-sm {
+            display: none; /* Oculta el título "Planificador" y el copyright */
+        }
+        /* Ajuste para el contenido principal cuando el sidebar está colapsado */
+        .main-content-expanded {
+            margin-left: 256px; /* Margen para el sidebar expandido */
+        }
+        .main-content-collapsed {
+            margin-left: 80px; /* Margen para el sidebar colapsado */
+        }
+
         .nav-item {
             display: flex;
             align-items: center;
@@ -49,6 +82,7 @@
             cursor: pointer;
             transition: all 0.2s;
             color: #3D3B30;
+            white-space: nowrap; /* Evita que el texto se rompa */
         }
         .nav-item:hover {
             background-color: #E0E0E0;
@@ -160,6 +194,22 @@
             font-size: 0.75rem;
             line-height: 1;
         }
+        /* Estilos para el botón de toggle del sidebar */
+        #sidebarToggleBtn {
+            position: absolute;
+            top: 1.5rem; /* Ajusta según el padding del sidebar */
+            right: 1.5rem; /* Ajusta según el padding del sidebar */
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #3D3B30;
+            transition: transform 0.3s ease-in-out;
+            z-index: 10; /* Asegura que esté por encima de otros elementos */
+        }
+        .sidebar-collapsed #sidebarToggleBtn {
+            right: 0.5rem; /* Ajusta la posición cuando está colapsado */
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden">
@@ -199,30 +249,34 @@
     </div
     >
     <!-- Barra Lateral de Navegación -->
-    <aside class="sidebar w-64 p-6 flex flex-col items-center justify-between">
+    <aside id="sidebar" class="sidebar sidebar-expanded flex flex-col items-center justify-between">
+        <button id="sidebarToggleBtn" aria-label="Alternar barra lateral">☰</button>
         <div class="w-full">
             <h2 class="text-3xl font-bold text-[#4A6CFA] mb-8 text-center">Planificador</h2>
             <nav class="space-y-2">
                 <div id="navDashboard" class="nav-item active" data-target="dashboard">
-                    <span class="icon">🏠</span> Dashboard
+                    <span class="icon">🏠</span> <span>Dashboard</span>
                 </div>
                 <div id="navPriorities" class="nav-item" data-target="priorities">
-                    <span class="icon">⭐</span> Prioridades
+                    <span class="icon">⭐</span> <span>Prioridades</span>
                 </div>
                 <div id="navTodos" class="nav-item" data-target="todos">
-                    <span class="icon">✅</span> Tareas
+                    <span class="icon">✅</span> <span>Tareas</span>
                 </div>
                 <div id="navHabits" class="nav-item" data-target="habits">
-                    <span class="icon">🔁</span> Hábitos
+                    <span class="icon">🔁</span> <span>Hábitos</span>
                 </div>
                 <div id="navDaily" class="nav-item" data-target="daily">
-                    <span class="icon">🗓️</span> Plan Diario
+                    <span class="icon">🗓️</span> <span>Plan Diario</span>
                 </div>
                 <div id="navNotes" class="nav-item" data-target="notes">
-                    <span class="icon">💡</span> Notas
+                    <span class="icon">💡</span> <span>Notas</span>
                 </div>
                 <div id="navNextWeek" class="nav-item" data-target="next-week">
-                    <span class="icon">➡️</span> Próxima Semana
+                    <span class="icon">➡️</span> <span>Próxima Semana</span>
+                </div>
+                <div id="navChangelog" class="nav-item" data-target="changelog">
+                    <span class="icon">📜</span> <span>Changelog</span>
                 </div>
             </nav>
         </div>
@@ -232,7 +286,7 @@
     </aside>
 
     <!-- Contenido Principal -->
-    <main class="flex-1 p-8 overflow-y-auto">
+    <main id="mainContent" class="flex-1 p-8 overflow-y-auto main-content-expanded">
         <!-- Título principal de la aplicación (H1 estático) -->
         <header class="mb-8">
             <h1 class="text-4xl font-bold text-[#3D3B30]">Mi Planificador Productivo</h1>
@@ -353,6 +407,14 @@
             <p id="noNextWeekItemsMessage" class="text-gray-500 mt-4 hidden">Nada planificado para la próxima semana todavía.</p>
         </section>
 
+        <!-- Nueva sección para el Changelog -->
+        <section id="changelog" class="content-section hidden">
+            <h2 id="changelogTitle" class="text-3xl font-bold text-[#3D3B30] mb-6">Changelog</h2>
+            <div class="space-y-6" id="changelogContent">
+                <!-- Contenido del changelog se inyectará aquí -->
+            </div>
+        </section>
+
     </main>
 
     <!-- Tailwind CSS CDN movido al final del body para no bloquear el renderizado -->
@@ -385,6 +447,12 @@
             const modalTitle = document.getElementById('modalTitle');
             const formFieldsContainer = document.getElementById('formFields');
             const confirmMessage = document.getElementById('confirmMessage');
+
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+            const changelogContent = document.getElementById('changelogContent');
+
 
             const elements = {
                 dashboardTasksCompleted: document.getElementById('dashboardTasksCompleted'),
@@ -471,6 +539,15 @@
             }
             // --- Fin de funciones de guardado y carga ---
 
+            // --- Función para alternar el sidebar ---
+            function toggleSidebar() {
+                sidebar.classList.toggle('sidebar-collapsed');
+                sidebar.classList.toggle('sidebar-expanded');
+                mainContent.classList.toggle('main-content-collapsed');
+                mainContent.classList.toggle('main-content-expanded');
+            }
+            // --- Fin de función para alternar el sidebar ---
+
             function showSection(targetId) {
                 sections.forEach(section => {
                     section.classList.add('hidden');
@@ -497,6 +574,7 @@
                 if (targetId === 'daily') renderDailyPlanner();
                 if (targetId === 'notes') renderNotes();
                 if (targetId === 'next-week') renderNextWeekItems();
+                if (targetId === 'changelog') renderChangelog(); // Renderizar Changelog
             }
 
             function showModal(title, type, item = null) {
@@ -830,10 +908,43 @@
                 elements.mainGoalDisplay.textContent = mainGoal;
             }
 
+            // --- Función para renderizar el Changelog ---
+            function renderChangelog() {
+                changelogContent.innerHTML = `
+                    <div class="card">
+                        <h3 class="text-xl font-semibold text-[#4A6CFA] mb-2">Versión 1.2.0 - 18 de Julio, 2025</h3>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            <li>**Nueva Característica:** Se añadió la funcionalidad de expansión y colapso del sidebar para una mejor visualización en pantallas pequeñas y mayor enfoque en el contenido.</li>
+                            <li>**Mejora:** Se implementó el almacenamiento persistente de datos usando \`localStorage\`. Tus prioridades, tareas, hábitos, eventos diarios, notas y meta principal ahora se guardan automáticamente y se cargan al reiniciar la aplicación.</li>
+                            <li>**Corrección de Error:** Se ajustaron las rutas del Service Worker para asegurar una correcta instalación y cacheo en entornos de GitHub Pages.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold text-[#4A6CFA] mb-2">Versión 1.1.0 - 17 de Julio, 2025</h3>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            <li>**Mejora:** Se mejoró el contraste de color en los elementos de navegación activos y los títulos de las tarjetas del Dashboard para una mejor accesibilidad.</li>
+                            <li>**Corrección de Error:** Se ajustó el registro del Service Worker para resolver problemas de "Invalid URL" y "Invalid scope" en el entorno de Canvas y sitios en vivo.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold text-[#4A6CFA] mb-2">Versión 1.0.0 - 16 de Julio, 2025</h3>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            <li>**Lanzamiento Inicial:** Funcionalidad básica de Planificador Productivo con Dashboard, Prioridades, Tareas, Hábitos, Plan Diario, Notas y Próxima Semana.</li>
+                            <li>**Diseño:** Interfaz de usuario limpia y responsiva utilizando Tailwind CSS.</li>
+                        </ul>
+                    </div>
+                `;
+            }
+            // --- Fin de función para renderizar el Changelog ---
+
+
             // Event Listeners for Navigation
             navItems.forEach(item => {
                 item.addEventListener('click', () => showSection(item.dataset.target));
             });
+
+            // Event Listener para el botón de toggle del sidebar
+            sidebarToggleBtn.addEventListener('click', toggleSidebar);
 
             // Event Listeners for CRUD buttons (delegation)
             document.addEventListener('click', (e) => {
@@ -848,8 +959,11 @@
                     else if (type === 'habit') itemToEdit = habits.find(h => h.id === id);
                     else if (type === 'dailyEvent') {
                         for (const d in dailyEvents) {
-                            itemToEdit = dailyEvents[d].find(ev => ev.id === id);
-                            if (itemToEdit) break;
+                            const index = dailyEvents[d].findIndex(ev => ev.id === id);
+                            if (index !== -1) {
+                                itemToEdit = dailyEvents[d][index];
+                                break;
+                            }
                         }
                     }
                     else if (type === 'note') itemToEdit = notes.find(n => n.id === id);
@@ -931,10 +1045,13 @@
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', async () => {
                     try {
-                        // Se vuelve a la forma estándar de registrar el Service Worker
-                        // para entornos de hosting reales como GitHub Pages.
-                        // El archivo service-worker.js DEBE estar en la raíz del despliegue.
-                        const registration = await navigator.serviceWorker.register('/service-worker.js');
+                        // Se registra el Service Worker directamente desde su archivo en el servidor.
+                        // La ruta debe ser la URL completa del archivo service-worker.js en tu GitHub Pages.
+                        // Por ejemplo: https://bochi-dev.github.io/PWA_planificador_generico_test_01/service-worker.js
+                        const serviceWorkerUrl = '/PWA_planificador_generico_test_01/service-worker.js';
+                        const scopePath = '/PWA_planificador_generico_test_01/'; // El alcance de tu PWA en GitHub Pages
+
+                        const registration = await navigator.serviceWorker.register(serviceWorkerUrl, { scope: scopePath });
                         console.log('Service Worker registrado con éxito:', registration);
 
                     } catch (error) {

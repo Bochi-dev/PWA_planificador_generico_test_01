@@ -1,17 +1,14 @@
 const CACHE_NAME = 'mi-planificador-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  // Agrega todas las URLs de tus archivos estáticos aquí
-  // Esto incluye tus archivos JS, CSS, iconos, etc.
-  'https://cdn.tailwindcss.com', // Tailwind CSS CDN
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap', // Fuente Inter CSS
-  'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMwLtVKi7fApXh-1Dzg.woff2', // Ejemplo de archivo de fuente (ajusta según las URLs reales de tus fuentes)
-  // Asegúrate de incluir todos los iconos que definiste en manifest.json
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  '/offline.html'
+  './', // Ruta relativa a la raíz del Service Worker (tu repositorio en GitHub Pages)
+  './index.html',
+  './manifest.json',
+  'https://cdn.tailwindcss.com', // URLs externas no necesitan ajuste
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap', // URLs externas no necesitan ajuste
+  'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMwLtVKi7fApXh-1Dzg.woff2', // URLs externas no necesitan ajuste
+  './icons/icon-192x192.png', // Ruta relativa
+  './icons/icon-512x512.png', // Ruta relativa
+  './offline.html' // Ruta relativa
 ];
 
 // Evento 'install': se dispara cuando el Service Worker se instala
@@ -46,15 +43,15 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         }).catch(() => {
           // Si la red falla, devuelve la página offline
-          return caches.match('/offline.html');
+          return caches.match('./offline.html'); // Ruta corregida aquí también
         });
       })
   );
 });
 
-
 // Evento 'activate': se dispara cuando el Service Worker se activa
 self.addEventListener('activate', (event) => {
+  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
