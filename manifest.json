@@ -2,7 +2,7 @@
   "name": "Mi Planificador Productivo",
   "short_name": "Planificador",
   "description": "Tu herramienta personal para organizar prioridades, tareas y hábitos.",
-  "start_url": "/index.html",
+  "start_url": "/PWA_planificador_generico_test_01/index.html",
   "display": "standalone",
   "background_color": "#F8F7F4",
   "theme_color": "#4A6CFA",
